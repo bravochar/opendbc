@@ -34,7 +34,7 @@ class CarInterface(CarInterfaceBase):
       if ret.flags & SubaruFlags.GLOBAL_GEN2:
         ret.safetyConfigs[0].safetyParam |= SubaruSafetyFlags.GEN2.value
       if ret.flags & SubaruFlags.LKAS_ANGLE:
-        ret.safetyConfigs[0].safetyParam |= SubaruSafetyFlags.KAS_ANGLE.value
+        ret.safetyConfigs[0].safetyParam |= SubaruSafetyFlags.LKAS_ANGLE.value
         ret.safetyConfigs[0].safetyParam |= SubaruSafetyFlags.ES_STATUS.value
 
     ret.steerLimitTimer = 0.4
