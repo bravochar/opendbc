@@ -35,7 +35,8 @@ class CarController(CarControllerBase):
       apply_steer = 0
       apply_torque = 0
       if self.CP.flags & SubaruFlags.LKAS_ANGLE:
-        apply_steer = apply_std_steer_angle_limits(actuators.steeringAngleDeg, self.apply_steer_last, CS.out.vEgoRaw, self.p)
+        apply_steer = apply_std_steer_angle_limits(actuators.steeringAngleDeg, self.apply_steer_last, CS.out.vEgoRaw,
+                                                   CS.out.steeringAngleDeg, CC.latActive, CarControllerParams.ANGLE_LIMITS)
 
         if not CC.latActive:
           apply_steer = CS.out.steeringAngleDeg
