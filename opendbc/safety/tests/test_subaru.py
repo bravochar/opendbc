@@ -41,6 +41,13 @@ def lkas_tx_msgs(alt_bus, lkas_msg=SubaruMsg.ES_LKAS):
           [SubaruMsg.ES_LKAS_State,     SUBARU_MAIN_BUS],
           [SubaruMsg.ES_Infotainment,   SUBARU_MAIN_BUS]]
 
+def lkas_angle_tx_msgs(alt_bus):
+  return [[SubaruMsg.ES_LKAS_ANGLE,     SUBARU_CAM_BUS],
+          [SubaruMsg.ES_Distance,       alt_bus],
+          [SubaruMsg.ES_DashStatus,     SUBARU_CAM_BUS],
+          [SubaruMsg.ES_LKAS_State,     SUBARU_CAM_BUS],
+          [SubaruMsg.ES_Infotainment,   SUBARU_CAM_BUS]]
+
 def long_tx_msgs(alt_bus):
   return [[SubaruMsg.ES_Brake,          alt_bus],
           [SubaruMsg.ES_Status,         alt_bus]]
@@ -170,11 +177,12 @@ class TestSubaruTorqueSafetyBase(TestSubaruSafetyBase, common.DriverTorqueSteeri
 class TestSubaruAngleSafetyBase(TestSubaruSafetyBase, common.AngleSteeringSafetyTest):
   ALT_MAIN_BUS = SUBARU_ALT_BUS
 
-  TX_MSGS = lkas_tx_msgs(SUBARU_MAIN_BUS, SubaruMsg.ES_LKAS_ANGLE)
-  RELAY_MALFUNCTION_ADDRS = {SUBARU_MAIN_BUS: (SubaruMsg.ES_LKAS_ANGLE, SubaruMsg.ES_LKAS,)}
+  TX_MSGS = lkas_angle_tx_msgs(SUBARU_ALT_BUS)
+  RELAY_MALFUNCTION_ADDRS = {SUBARU_CAM_BUS: (SubaruMsg.ES_LKAS, SubaruMsg.ES_DashStatus,
+                                              SubaruMsg.ES_LKAS_State, SubaruMsg.ES_Infotainment)}
   FWD_BLACKLISTED_ADDRS = fwd_blacklisted_addr(SubaruMsg.ES_LKAS_ANGLE)
 
-  FLAGS = SubaruSafetyFlags.LKAS_ANGLE
+  FLAGS = SubaruSafetyFlags.LKAS_ANGLE | SubaruSafetyFlags.GEN2
 
   ANGLE_RATE_BP = [0, 15]
   ANGLE_RATE_UP = [5, 0.15]
@@ -225,7 +233,6 @@ class TestSubaruGen2AngleStockLongitudinalSafety(TestSubaruStockLongitudinalSafe
   ALT_MAIN_BUS = SUBARU_ALT_BUS
 
   FLAGS = SubaruSafetyFlags.GEN2 | SubaruSafetyFlags.LKAS_ANGLE
-  TX_MSGS = lkas_tx_msgs(SUBARU_ALT_BUS) + lkas_tx_msgs(SUBARU_MAIN_BUS, SubaruMsg.ES_LKAS_ANGLE)
 
 
 class TestSubaruGen2LongitudinalSafety(TestSubaruLongitudinalSafetyBase, TestSubaruGen2TorqueSafetyBase):
