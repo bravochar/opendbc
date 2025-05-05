@@ -191,11 +191,11 @@ class TestSubaruAngleSafetyBase(TestSubaruSafetyBase, common.AngleSteeringSafety
 
   def _angle_cmd_msg(self, angle, enabled=1):
     values = {"LKAS_Output": angle, "LKAS_Request": enabled}
-    return self.packer.make_can_msg_panda("ES_LKAS_ANGLE", 0, values)
+    return self.packer.make_can_msg_panda("ES_LKAS_ANGLE", SUBARU_CAM_BUS, values)
 
   def _angle_meas_msg(self, angle):
     values = {"Steering_Angle": angle}
-    return self.packer.make_can_msg_panda("Steering_Torque", 0, values)
+    return self.packer.make_can_msg_panda("Steering_Torque", SUBARU_MAIN_BUS, values)
 
   # need to use ES_DashStatus Message
   def _pcm_status_msg(self, enable):
