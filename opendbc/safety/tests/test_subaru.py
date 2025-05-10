@@ -197,6 +197,11 @@ class TestSubaruAngleSafetyBase(TestSubaruSafetyBase, common.AngleSteeringSafety
     values = {"Steering_Angle": angle}
     return self.packer.make_can_msg_panda("Steering_Torque", SUBARU_MAIN_BUS, values)
 
+  def _speed_msg(self, speed):
+    # convert meters-per-second to kilometers per hour for message
+    values = {s: speed * 3.6 for s in ["FR", "FL", "RR", "RL"]}
+    return self.packer.make_can_msg_panda("Wheel_Speeds", self.ALT_MAIN_BUS, values)
+
   # need to use ES_DashStatus Message
   def _pcm_status_msg(self, enable):
     values = {"Cruise_Activated": enable}
