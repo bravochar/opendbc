@@ -163,7 +163,7 @@ static bool subaru_tx_hook(const CANPacket_t *to_send) {
   const TorqueSteeringLimits SUBARU_GEN2_STEERING_LIMITS = SUBARU_STEERING_LIMITS_GENERATOR(1000, 40, 40);
 
   const AngleSteeringLimits SUBARU_ANGLE_STEERING_LIMITS = {
-    .max_angle = 600*100,
+    .max_angle = 300*100,
     .angle_deg_to_can = 100.,
     .angle_rate_up_lookup = {
       {0., 15., 15.},
