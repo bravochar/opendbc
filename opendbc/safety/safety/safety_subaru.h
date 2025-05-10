@@ -130,9 +130,11 @@ static void subaru_rx_hook(const CANPacket_t *to_push) {
       bool cruise_engaged = GET_BIT(to_push, 36U);
       pcm_cruise_check(cruise_engaged);
     }
-  } else if ((addr == MSG_SUBARU_CruiseControl) && (bus == alt_main_bus)) {
-    bool cruise_engaged = GET_BIT(to_push, 41U);
-    pcm_cruise_check(cruise_engaged);
+  } else {
+    if ((addr == MSG_SUBARU_CruiseControl) && (bus == alt_main_bus)) {
+      bool cruise_engaged = GET_BIT(to_push, 41U);
+      pcm_cruise_check(cruise_engaged);
+    }
   }
 
   // update vehicle moving with any non-zero wheel speed
@@ -270,7 +272,7 @@ static safety_config subaru_init(uint16_t param) {
     SUBARU_GEN2_LONG_ADDITIONAL_TX_MSGS()
   };
 
-  static const CanMsg SUBARU_LKAS_ANGLE_TX_MSGS[] = {
+  static const CanMsg subaru_lkas_angle_tx_msgs[] = {
     SUBARU_LKAS_ANGLE_TX_MSGS(SUBARU_ALT_BUS)
     SUBARU_COMMON_TX_MSGS(SUBARU_ALT_BUS)
   };
@@ -300,7 +302,7 @@ static safety_config subaru_init(uint16_t param) {
 
   safety_config ret;
   if (subaru_lkas_angle) {
-    ret = BUILD_SAFETY_CFG(subaru_lkas_angle_rx_checks, SUBARU_LKAS_ANGLE_TX_MSGS);
+    ret = BUILD_SAFETY_CFG(subaru_lkas_angle_rx_checks, subaru_lkas_angle_tx_msgs);
   } else if (subaru_gen2) {
     ret = subaru_longitudinal ? BUILD_SAFETY_CFG(subaru_gen2_rx_checks, SUBARU_GEN2_LONG_TX_MSGS) : \
                                 BUILD_SAFETY_CFG(subaru_gen2_rx_checks, SUBARU_GEN2_TX_MSGS);
