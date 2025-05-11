@@ -50,12 +50,6 @@
   {MSG_SUBARU_ES_LKAS_State,     SUBARU_MAIN_BUS, 8, .check_relay = true},  \
   {MSG_SUBARU_ES_Infotainment,   SUBARU_MAIN_BUS, 8, .check_relay = true},  \
 
-#define SUBARU_LKAS_ANGLE_TX_MSGS(alt_bus) \
-  {MSG_SUBARU_ES_LKAS_ANGLE,     SUBARU_CAM_BUS,  8, .check_relay = true},  \
-  {MSG_SUBARU_ES_DashStatus,     SUBARU_CAM_BUS,  8, .check_relay = true},  \
-  {MSG_SUBARU_ES_LKAS_State,     SUBARU_CAM_BUS,  8, .check_relay = true},  \
-  {MSG_SUBARU_ES_Infotainment,   SUBARU_CAM_BUS,  8, .check_relay = true},  \
-
 #define SUBARU_COMMON_TX_MSGS(alt_bus) \
   {MSG_SUBARU_ES_Distance, alt_bus, 8, .check_relay = false}, \
 
@@ -274,7 +268,7 @@ static safety_config subaru_init(uint16_t param) {
   };
 
   static const CanMsg subaru_lkas_angle_tx_msgs[] = {
-    SUBARU_LKAS_ANGLE_TX_MSGS(SUBARU_ALT_BUS)
+    SUBARU_BASE_TX_MSGS(SUBARU_ALT_BUS, MSG_SUBARU_ES_LKAS_ANGLE)
     SUBARU_COMMON_TX_MSGS(SUBARU_ALT_BUS)
   };
 
