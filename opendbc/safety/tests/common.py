@@ -682,8 +682,8 @@ class AngleSteeringSafetyTest(VehicleSpeedSafetyTest):
   def test_angle_cmd_when_enabled(self):
     # when controls are allowed, angle cmd rate limit is enforced
     speeds = [0., 1., 5., 10., 15., 50.]
-    max_angle = min(self.STEER_ANGLE_MAX * 2, 650)
-    angles = np.concatenate((np.arange(-max_angle, max_angle, 5), [0]))
+    angle_max_abs = self.STEER_ANGLE_MAX + 10
+    angles = np.concatenate((np.arange(-angle_max_abs, angle_max_abs, 5), [0]))
     for a in angles:
       for s in speeds:
         max_delta_up = np.interp(s, self.ANGLE_RATE_BP, self.ANGLE_RATE_UP)
