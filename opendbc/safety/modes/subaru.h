@@ -23,6 +23,7 @@
 #define MSG_SUBARU_CruiseControl         0x240U
 #define MSG_SUBARU_Throttle              0x40U
 #define MSG_SUBARU_Steering_Torque       0x119U
+#define MSG_SUBARU_Steering_2            0x11aU
 #define MSG_SUBARU_Wheel_Speeds          0x13aU
 
 #define MSG_SUBARU_ES_LKAS               0x122U
@@ -74,6 +75,7 @@
 #define SUBARU_LKAS_ANGLE_RX_CHECKS(alt_bus)                                                                            \
   {.msg = {{MSG_SUBARU_Throttle,        SUBARU_MAIN_BUS, 8, 100U, .max_counter = 15U, .ignore_quality_flag = true}, { 0 }, { 0 }}}, \
   {.msg = {{MSG_SUBARU_Steering_Torque, SUBARU_MAIN_BUS, 8, 50U,  .max_counter = 15U, .ignore_quality_flag = true}, { 0 }, { 0 }}},  \
+  {.msg = {{MSG_SUBARU_Steering_2,      SUBARU_MAIN_BUS, 8, 50U,  .max_counter = 15U, .ignore_quality_flag = true}, { 0 }, { 0 }}},  \
   {.msg = {{MSG_SUBARU_Wheel_Speeds,    alt_bus,         8, 50U,  .max_counter = 15U, .ignore_quality_flag = true}, { 0 }, { 0 }}},  \
   {.msg = {{MSG_SUBARU_Brake_Status,    alt_bus,         8, 50U,  .max_counter = 15U, .ignore_quality_flag = true}, { 0 }, { 0 }}},  \
   {.msg = {{MSG_SUBARU_ES_Brake,        alt_bus,         8, 20U,  .max_counter = 15U, .ignore_quality_flag = true}, { 0 }, { 0 }}},  \
@@ -115,6 +117,12 @@ static void subaru_rx_hook(const CANPacket_t *msg) {
     if ((msg->addr == MSG_SUBARU_ES_Brake) && (msg->bus == alt_main_bus)) {
       bool cruise_engaged = GET_BIT(msg, 39U);
       pcm_cruise_check(cruise_engaged);
+    }
+
+    if ((msg->addr == MSG_SUBARU_Steering_2) && (msg->bus == SUBARU_MAIN_BUS)) {
+      // Steering_Angle: bit 24, 17 bits, signed, scale -0.01 deg/unit 
+      int angle_meas_new = to_signed((GET_BYTES(msg, 3, 3) >> 0) & 0x1FFFFU, 17);
+      update_sample(&angle_meas, -1 * angle_meas_new);
     }
   } else {
     if ((msg->addr == MSG_SUBARU_CruiseControl) && (msg->bus == alt_main_bus)) {

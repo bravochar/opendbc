@@ -190,7 +190,7 @@ class TestSubaruAngleSafetyBase(TestSubaruSafetyBase, common.AngleSteeringSafety
 
   def _angle_meas_msg(self, angle):
     values = {"Steering_Angle": angle}
-    return self.packer.make_can_msg_safety("Steering_Torque", SUBARU_MAIN_BUS, values)
+    return self.packer.make_can_msg_safety("Steering_2", SUBARU_MAIN_BUS, values)
 
   def _speed_msg(self, speed):
     # convert meters-per-second to kilometers per hour for message
