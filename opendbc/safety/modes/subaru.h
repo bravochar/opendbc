@@ -72,11 +72,11 @@
   {.msg = {{MSG_SUBARU_CruiseControl,   alt_bus,         8, 20U, .max_counter = 15U, .ignore_quality_flag = true}, { 0 }, { 0 }}},  \
 
 #define SUBARU_LKAS_ANGLE_RX_CHECKS(alt_bus)                                                                            \
-  {.msg = {{MSG_SUBARU_Throttle,        SUBARU_MAIN_BUS, 8, .max_counter = 15U, .frequency = 100U}, { 0 }, { 0 }}}, \
-  {.msg = {{MSG_SUBARU_Steering_Torque, SUBARU_MAIN_BUS, 8, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},  \
-  {.msg = {{MSG_SUBARU_Wheel_Speeds,    alt_bus,         8, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},  \
-  {.msg = {{MSG_SUBARU_Brake_Status,    alt_bus,         8, .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}},  \
-  {.msg = {{MSG_SUBARU_ES_DashStatus,   SUBARU_CAM_BUS,  8, .max_counter = 15U, .frequency = 20U}, { 0 }, { 0 }}},  \
+  {.msg = {{MSG_SUBARU_Throttle,        SUBARU_MAIN_BUS, 8, 100U, .max_counter = 15U, .ignore_quality_flag = true}, { 0 }, { 0 }}}, \
+  {.msg = {{MSG_SUBARU_Steering_Torque, SUBARU_MAIN_BUS, 8, 50U,  .max_counter = 15U, .ignore_quality_flag = true}, { 0 }, { 0 }}},  \
+  {.msg = {{MSG_SUBARU_Wheel_Speeds,    alt_bus,         8, 50U,  .max_counter = 15U, .ignore_quality_flag = true}, { 0 }, { 0 }}},  \
+  {.msg = {{MSG_SUBARU_Brake_Status,    alt_bus,         8, 50U,  .max_counter = 15U, .ignore_quality_flag = true}, { 0 }, { 0 }}},  \
+  {.msg = {{MSG_SUBARU_ES_Brake,        alt_bus,         8, 20U,  .max_counter = 15U, .ignore_quality_flag = true}, { 0 }, { 0 }}},  \
 
 static bool subaru_gen2 = false;
 static bool subaru_longitudinal = false;
@@ -112,8 +112,8 @@ static void subaru_rx_hook(const CANPacket_t *msg) {
   // enter controls on rising edge of ACC, exit controls on ACC off
   if (subaru_lkas_angle) {
     // LKAS Angle cars use different message
-    if ((msg->addr == MSG_SUBARU_ES_DashStatus) && (msg->bus == SUBARU_CAM_BUS)) {
-      bool cruise_engaged = GET_BIT(msg, 36U);
+    if ((msg->addr == MSG_SUBARU_ES_Brake) && (msg->bus == alt_main_bus)) {
+      bool cruise_engaged = GET_BIT(msg, 39U);
       pcm_cruise_check(cruise_engaged);
     }
   } else {
@@ -185,10 +185,10 @@ static bool subaru_tx_hook(const CANPacket_t *msg) {
     violation |= steer_torque_cmd_checks(desired_torque, steer_req, limits);
   }
 
-  if (addr == MSG_SUBARU_ES_LKAS_ANGLE) {
-    int desired_angle = GET_BYTES(to_send, 5, 3) & 0x1FFFFU;
+  if (msg->addr == MSG_SUBARU_ES_LKAS_ANGLE) {
+    int desired_angle = GET_BYTES(msg, 5, 3) & 0x1FFFFU;
     desired_angle = -1 * to_signed(desired_angle, 17);
-    bool lkas_request = GET_BIT(to_send, 12U);
+    bool lkas_request = GET_BIT(msg, 12U);
 
     violation |= steer_angle_cmd_checks(desired_angle, lkas_request, SUBARU_ANGLE_STEERING_LIMITS);
   }
