@@ -197,10 +197,10 @@ class TestSubaruAngleSafetyBase(TestSubaruSafetyBase, common.AngleSteeringSafety
     values = {s: speed * 3.6 for s in ["FR", "FL", "RR", "RL"]}
     return self.packer.make_can_msg_safety("Wheel_Speeds", self.ALT_MAIN_BUS, values)
 
-  # need to use ES_DashStatus Message
+  # need to use ES_Brake Message
   def _pcm_status_msg(self, enable):
     values = {"Cruise_Activated": enable}
-    return self.packer.make_can_msg_safety("ES_DashStatus", self.ALT_CAM_BUS, values)
+    return self.packer.make_can_msg_safety("ES_Brake", self.ALT_MAIN_BUS, values)
 
 
 class TestSubaruGen1TorqueStockLongitudinalSafety(TestSubaruStockLongitudinalSafetyBase, TestSubaruTorqueSafetyBase):
