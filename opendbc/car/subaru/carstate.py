@@ -92,7 +92,7 @@ class CarState(CarStateBase):
       #  always zero on hybrids. Probably need to split angle & hybrid. 0x27 and 0x225 on hybrids may work for them.
       ret.cruiseState.enabled = cp_es_brake.vl["ES_Brake"]['Cruise_Activated'] != 0
 
-      # TODO: XXX: test if HEAD above supercedes my changes below
+      # TODO: XXX: test if HEAD above supersedes my changes below
       #ret.cruiseState.enabled = cp_cam.vl["ES_DashStatus"]['Cruise_Activated'] != 0
       ret.cruiseState.available = cp_cam.vl["ES_DashStatus"]['Cruise_On'] != 0
 
