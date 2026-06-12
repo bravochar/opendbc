@@ -46,7 +46,7 @@ class CarInterface(CarInterfaceBase):
       ret.steerControlType = structs.CarParams.SteerControlType.angle
 
       if candidate == CAR.SUBARU_ASCENT_2023:
-        ret.dashcamOnly = False
+        ret.dashcamOnly = is_release
         ret.steerActuatorDelay = 0.3  # end-to-end angle controller
         ret.lateralTuning.init('pid')
         ret.lateralTuning.pid.kf = 0.00003
