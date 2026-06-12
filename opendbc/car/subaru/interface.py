@@ -43,17 +43,11 @@ class CarInterface(CarInterfaceBase):
       CarInterfaceBase.configure_torque_tune(candidate, ret.lateralTuning)
 
     if ret.flags & SubaruFlags.LKAS_ANGLE:
+      ret.dashcamOnly = is_release
       ret.steerControlType = structs.CarParams.SteerControlType.angle
 
       if candidate == CAR.SUBARU_ASCENT_2023:
-        ret.dashcamOnly = is_release
         ret.steerActuatorDelay = 0.3  # end-to-end angle controller
-        ret.lateralTuning.init('pid')
-        ret.lateralTuning.pid.kf = 0.00003
-        ret.lateralTuning.pid.kpBP = [0., 20.]
-        ret.lateralTuning.pid.kiBP = [0., 20.]
-        ret.lateralTuning.pid.kpV = [0.0025, 0.1]
-        ret.lateralTuning.pid.kiV = [0.00025, 0.01]
 
     elif candidate == CAR.SUBARU_ASCENT:
       ret.steerActuatorDelay = 0.3  # end-to-end angle controller
