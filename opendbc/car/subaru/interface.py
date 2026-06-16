@@ -46,9 +46,8 @@ class CarInterface(CarInterfaceBase):
       ret.dashcamOnly = is_release
       ret.steerControlType = structs.CarParams.SteerControlType.angle
 
-      if candidate == CAR.SUBARU_ASCENT_2023:
-        # XXX: observed between .1-.2 in cabana. Trying .2 first
-        ret.steerActuatorDelay = 0.2
+    if candidate == CAR.SUBARU_ASCENT_2023:
+      ret.steerActuatorDelay = 0.15
 
     elif candidate == CAR.SUBARU_ASCENT:
       ret.steerActuatorDelay = 0.3  # end-to-end angle controller
