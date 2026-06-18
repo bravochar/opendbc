@@ -1,6 +1,7 @@
 import numpy as np
 from opendbc.can import CANPacker
 from opendbc.car import Bus, make_tester_present_msg
+from opendbc.car.common.filter_simple import FirstOrderFilter
 from opendbc.car.lateral import apply_driver_steer_torque_limits, common_fault_avoidance, apply_steer_angle_limits_vm
 from opendbc.car.interfaces import CarControllerBase
 from opendbc.car.subaru import subarucan
@@ -35,21 +36,28 @@ class CarController(CarControllerBase):
     if self.CP.flags & SubaruFlags.LKAS_ANGLE:
       self.VM = VehicleModel(get_safety_CP())
 
-  def lateral_angle(self, CC, CS):
-    apply_steer = apply_steer_angle_limits_vm(
-            CC.actuators.steeringAngleDeg,
-            self.apply_steer_last,
-            CS.out.vEgoRaw,
-            CS.out.steeringAngleDeg,
-            CC.latActive,
-            self.p,
-            self.VM)
+      DT_STEER = 0.01 * self.p.STEER_STEP  # if base loop is 100Hz
+      self.angle_filter = FirstOrderFilter(0.0, 0.15, DT_STEER)
 
+  def lateral_angle(self, CC, CS):
     if not CC.latActive:
+      self.angle_filter.x = CS.out.steeringAngleDeg # reset on disengage
       apply_steer = CS.out.steeringAngleDeg
 
-    self.apply_steer_last = apply_steer
+    else:
+      apply_steer = apply_steer_angle_limits_vm(
+        CC.actuators.steeringAngleDeg,
+        self.apply_steer_last,
+        CS.out.vEgoRaw,
+        CS.out.steeringAngleDeg,
+        CC.latActive,
+        self.p,
+        self.VM)
 
+      # filter updates to match stock LKAS's output filtering
+      apply_steer = self.angle_filter.update(apply_steer)
+
+    self.apply_steer_last = apply_steer
     return subarucan.create_steering_control_angle(self.packer, apply_steer, CC.latActive)
 
   def lateral_torque(self, CC, CS):
