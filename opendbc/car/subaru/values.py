@@ -14,7 +14,7 @@ Ecu = CarParams.Ecu
 class CarControllerParams:
   ANGLE_LIMITS: AngleSteeringLimitsVM = AngleSteeringLimitsVM(
     650,                # STEER_ANGLE_MAX, deg
-    MAX_ANGLE_RATE=5,   # deg/frame, comfort rate limit
+    MAX_ANGLE_RATE=1,   # deg/frame, comfort rate limit
   )
 
   def __init__(self, CP):
