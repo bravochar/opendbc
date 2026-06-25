@@ -36,21 +36,26 @@ class CarController(CarControllerBase):
       self.VM = VehicleModel(get_safety_CP())
 
   def lateral_angle(self, CC, CS):
+    # go inactive on heavy driver override so the command snaps to measured
+    # before disengage, preventing command-vs-measured divergence that panda
+    # blocks, risking LKAS faults for missed messages
+    lat_active = CC.latActive and not CS.out.steeringPressed
+
     apply_steer = apply_steer_angle_limits_vm(
             CC.actuators.steeringAngleDeg,
             self.apply_steer_last,
             CS.out.vEgoRaw,
             CS.out.steeringAngleDeg,
-            CC.latActive,
+            lat_active,
             self.p,
             self.VM)
 
-    if not CC.latActive:
+    if not lat_active:
       apply_steer = CS.out.steeringAngleDeg
 
     self.apply_steer_last = apply_steer
 
-    return subarucan.create_steering_control_angle(self.packer, apply_steer, CC.latActive)
+    return subarucan.create_steering_control_angle(self.packer, apply_steer, lat_active)
 
   def lateral_torque(self, CC, CS):
     apply_torque = int(round(CC.actuators.torque * self.p.STEER_MAX))
