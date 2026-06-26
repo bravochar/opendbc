@@ -49,7 +49,10 @@ class CarController(CarControllerBase):
       self.driver_override = False
     # between thresholds: hold current state
 
-    lat_active = CC.latActive and not self.driver_override
+    # directly poll cruiseState.enabled, as Panda-side does the same to compute
+    # `controls_allowed` and sending lat_active with `controls_allowed` false
+    # will result in blocked frames (and eventually EPS faults)
+    lat_active = CC.latActive and CS.out.cruiseState.enabled and not self.driver_override
 
     apply_steer = apply_steer_angle_limits_vm(
             CC.actuators.steeringAngleDeg,
