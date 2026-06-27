@@ -72,13 +72,12 @@
   {.msg = {{MSG_SUBARU_Brake_Status,    alt_bus,         8, 50U, .max_counter = 15U, .ignore_quality_flag = true}, { 0 }, { 0 }}},  \
   {.msg = {{MSG_SUBARU_CruiseControl,   alt_bus,         8, 20U, .max_counter = 15U, .ignore_quality_flag = true}, { 0 }, { 0 }}},  \
 
-#define SUBARU_LKAS_ANGLE_RX_CHECKS(alt_bus, brake_bus)                                                                            \
+#define SUBARU_LKAS_ANGLE_RX_CHECKS(alt_bus)                                                                            \
   {.msg = {{MSG_SUBARU_Throttle,        SUBARU_MAIN_BUS, 8, 100U, .max_counter = 15U, .ignore_quality_flag = true}, { 0 }, { 0 }}}, \
   {.msg = {{MSG_SUBARU_Steering_Torque, SUBARU_MAIN_BUS, 8, 50U,  .max_counter = 15U, .ignore_quality_flag = true}, { 0 }, { 0 }}},  \
   {.msg = {{MSG_SUBARU_Steering_2,      SUBARU_MAIN_BUS, 8, 50U,  .max_counter = 15U, .ignore_quality_flag = true}, { 0 }, { 0 }}},  \
   {.msg = {{MSG_SUBARU_Wheel_Speeds,    alt_bus,         8, 50U,  .max_counter = 15U, .ignore_quality_flag = true}, { 0 }, { 0 }}},  \
   {.msg = {{MSG_SUBARU_Brake_Status,    alt_bus,         8, 50U,  .max_counter = 15U, .ignore_quality_flag = true}, { 0 }, { 0 }}},  \
-  {.msg = {{MSG_SUBARU_ES_Brake,        brake_bus,       8, 20U,  .max_counter = 15U, .ignore_quality_flag = true}, { 0 }, { 0 }}},  \
 
 static bool subaru_gen2 = false;
 static bool subaru_longitudinal = false;
@@ -103,7 +102,6 @@ static uint32_t subaru_compute_checksum(const CANPacket_t *msg) {
 
 static void subaru_rx_hook(const CANPacket_t *msg) {
   const unsigned int alt_main_bus = subaru_gen2 ? SUBARU_ALT_BUS : SUBARU_MAIN_BUS;
-  const unsigned int brake_bus = subaru_gen2 ? SUBARU_ALT_BUS : SUBARU_CAM_BUS;
 
   if ((msg->addr == MSG_SUBARU_Steering_Torque) && (msg->bus == SUBARU_MAIN_BUS)) {
     int torque_driver_new;
@@ -114,16 +112,14 @@ static void subaru_rx_hook(const CANPacket_t *msg) {
 
   // enter controls on rising edge of ACC, exit controls on ACC off
   if (subaru_lkas_angle) {
-    // LKAS Angle cars use different message
-    if ((msg->addr == MSG_SUBARU_ES_Brake) && (msg->bus == brake_bus)) {
-      bool cruise_engaged = GET_BIT(msg, 39U);
-      pcm_cruise_check(cruise_engaged);
-    }
-
     if ((msg->addr == MSG_SUBARU_Steering_2) && (msg->bus == SUBARU_MAIN_BUS)) {
       // Steering_Angle: bit 24, 17 bits, signed, scale -0.01 deg/unit 
       int angle_meas_new = to_signed((GET_BYTES(msg, 3, 3) >> 0) & 0x1FFFFU, 17);
       update_sample(&angle_meas, -1 * angle_meas_new);
+
+      // Cruise_Activated: bit 16
+      bool cruise_engaged = GET_BIT(msg, 16U);
+      pcm_cruise_check(cruise_engaged);
     }
   } else {
     if ((msg->addr == MSG_SUBARU_CruiseControl) && (msg->bus == alt_main_bus)) {
@@ -293,11 +289,11 @@ static safety_config subaru_init(uint16_t param) {
   };
 
   static RxCheck subaru_lkas_angle_rx_checks[] = {
-    SUBARU_LKAS_ANGLE_RX_CHECKS(SUBARU_MAIN_BUS, SUBARU_CAM_BUS)
+    SUBARU_LKAS_ANGLE_RX_CHECKS(SUBARU_MAIN_BUS)
   };
 
   static RxCheck subaru_lkas_angle_rx_checks_gen2[] = {
-    SUBARU_LKAS_ANGLE_RX_CHECKS(SUBARU_ALT_BUS, SUBARU_ALT_BUS)
+    SUBARU_LKAS_ANGLE_RX_CHECKS(SUBARU_ALT_BUS)
   };
 
   const uint16_t SUBARU_PARAM_GEN2 = 1;
