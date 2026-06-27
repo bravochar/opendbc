@@ -105,7 +105,9 @@ BO_ 281 Steering_Torque: 8 XXX
 BO_ 282 Steering_2: 8 XXX
  SG_ CHECKSUM : 0|8@1+ (1,0) [0|1] "" XXX
  SG_ COUNTER : 8|4@1+ (1,0) [0|1] "" XXX
+ SG_ Cruise_Activated : 16|1@1+ (1,0) [0|1] "" XXX
  SG_ Steering_Angle : 24|17@1- (-0.01,0) [0|1] "" XXX
+ SG_ Steering_Angle_2 : 47|17@1- (-0.01,0) [0|1] "" XXX
 
 BO_ 312 Brake_Pressure_L_R: 8 XXX
  SG_ CHECKSUM : 0|8@1+ (1,0) [0|255] "" XXX
@@ -280,6 +282,7 @@ BO_ 289 ES_STATIC_2: 8 XXX
  SG_ Cruise_Fault : 18|1@0+ (1,0) [0|1] "" XXX
 
 CM_ SG_ 64 Throttle_Combo "Throttle Cruise + Pedal";
+CM_ SG_ 282 Steering_Angle_2 "Second steering angle, but not bit-for-bit match";
 CM_ SG_ 313 Brake_Lights "Driver or Cruise Brake on";
 CM_ SG_ 544 Cruise_Brake_Lights "1 = switch on brake lights";
 CM_ SG_ 544 Brake_Pressure "Winds down after cruise disabled. Also can be non-zero when likely preparing for AEB";
