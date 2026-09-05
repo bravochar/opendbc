@@ -161,9 +161,7 @@ class TestSubaruAngleSafetyBase(TestSubaruSafetyBase, common.AngleSteeringSafety
     return self.packer.make_can_msg_safety("ES_LKAS_ANGLE", SUBARU_MAIN_BUS, values)
 
   def _angle_meas_msg(self, angle):
-    # Note: if Cruise_Activated is *not* set, then it will be zeroed out, which can cause
-    #   failures in tests that toggle manipulate and expect controls_allowed to be unaffected
-    values = {"Steering_Angle": angle, "Cruise_Activated": self.safety.get_controls_allowed()}
+    values = {"Steering_Angle": angle}
     return self.packer.make_can_msg_safety("Steering_2", SUBARU_MAIN_BUS, values)
 
   def _speed_msg(self, speed):
@@ -171,10 +169,11 @@ class TestSubaruAngleSafetyBase(TestSubaruSafetyBase, common.AngleSteeringSafety
     values = {s: speed * 3.6 for s in ["FR", "FL", "RR", "RL"]}
     return self.packer.make_can_msg_safety("Wheel_Speeds", self.ALT_MAIN_BUS, values)
 
-  # Steering_2 (bit 16) for engagement
+  # messages unchanged for now: still ES_Brake (bit 39) for engagement
   def _pcm_status_msg(self, enable):
     values = {"Cruise_Activated": enable}
-    return self.packer.make_can_msg_safety("Steering_2", SUBARU_MAIN_BUS, values)
+    bus = SUBARU_ALT_BUS if (self.FLAGS & SubaruSafetyFlags.GEN2) else SUBARU_CAM_BUS
+    return self.packer.make_can_msg_safety("ES_Brake", bus, values)
 
   def test_angle_cmd_when_enabled(self):
     # lateral accel and jerk are tested separately below
