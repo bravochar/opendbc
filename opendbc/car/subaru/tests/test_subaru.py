@@ -20,8 +20,8 @@ def _cc(angle, lat_active=True):
   return SimpleNamespace(latActive=lat_active, actuators=SimpleNamespace(steeringAngleDeg=angle))
 
 
-def _cs(v_ego, angle=0.0, cruise_enabled=True):
-  return SimpleNamespace(out=SimpleNamespace(vEgoRaw=v_ego, steeringAngleDeg=angle, steeringTorque=0.0,
+def _cs(v_ego, angle=0.0, cruise_enabled=True, rate=0.0):
+  return SimpleNamespace(out=SimpleNamespace(vEgoRaw=v_ego, steeringAngleDeg=angle, steeringRateDeg=rate, steeringTorque=0.0,
                                              cruiseState=SimpleNamespace(enabled=cruise_enabled)))
 
 

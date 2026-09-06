@@ -17,6 +17,11 @@ MAX_STEER_RATE_FRAMES = 7  # tx control frames needed before torque can be cut
 ANGLE_FILTER_SPEED_BP = [5., 10., 20.]  # m/s
 ANGLE_FILTER_RC = [0.20, 0.10, 0.]     # s, first-order time constant
 
+# don't hand back into a moving or off-target wheel
+OVERRIDE_SETTLE_RATE = 8.0   # deg/s
+OVERRIDE_SETTLE_ANGLE = 3.0  # deg
+OVERRIDE_SETTLE_FRAMES = 20  # 0.4s
+
 
 def get_safety_CP():
   # Use the Ascent for lateral limiting to match safety (most restrictive slip factor)
@@ -31,6 +36,7 @@ class CarController(CarControllerBase):
     self.apply_torque_last = 0
     self.apply_steer_last = 0
     self.driver_override = False
+    self.override_settle_frames = 0
 
     self.cruise_button_prev = 0
     self.steer_rate_counter = 0
@@ -43,17 +49,24 @@ class CarController(CarControllerBase):
       self.angle_filter = FirstOrderFilter(0., ANGLE_FILTER_RC[0], DT_CTRL * self.p.STEER_STEP)
 
   def lateral_angle(self, CC, CS):
-    # Match Tesla's override handling: go inactive on heavy driver override so the
-    # commanded angle tracks measured during the override. Subaru has no graded EPS
-    # hands-on level like Tesla's EPAS3S_handsOnLevel, so threshold raw torque with
-    # hysteresis. Prevents command-vs-measured divergence that panda's angle safety
-    # check blocks - those dropped frames can fault the EPS.
+    # check for driver override
     abs_torque = abs(CS.out.steeringTorque)
     if abs_torque > self.p.STEER_OVERRIDE_TORQUE_HIGH:
       self.driver_override = True
-    elif abs_torque < self.p.STEER_OVERRIDE_TORQUE_LOW:
-      self.driver_override = False
-    # between thresholds: hold current state
+      self.override_settle_frames = 0
+
+    elif self.driver_override:
+      settled = abs_torque < self.p.STEER_OVERRIDE_TORQUE_LOW and \
+                abs(CS.out.steeringRateDeg) < OVERRIDE_SETTLE_RATE and \
+                abs(CC.actuators.steeringAngleDeg - CS.out.steeringAngleDeg) < OVERRIDE_SETTLE_ANGLE
+      if settled:
+        self.override_settle_frames += 1
+
+        if self.override_settle_frames >= OVERRIDE_SETTLE_FRAMES:
+          self.driver_override = False
+
+      else:
+        self.override_settle_frames = 0
 
     # directly poll cruiseState.enabled, as Panda-side does the same to compute
     # `controls_allowed` and sending lat_active with `controls_allowed` false
@@ -64,6 +77,7 @@ class CarController(CarControllerBase):
     if lat_active:
       self.angle_filter.update_alpha(float(np.interp(CS.out.vEgoRaw, ANGLE_FILTER_SPEED_BP, ANGLE_FILTER_RC)))
       apply_angle = self.angle_filter.update(apply_angle)
+
     else:
       # hold the filter at the measured angle so control resumes without a step
       self.angle_filter.x = CS.out.steeringAngleDeg
