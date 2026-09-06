@@ -1,6 +1,7 @@
 import numpy as np
 from opendbc.can import CANPacker
-from opendbc.car import Bus, make_tester_present_msg
+from opendbc.car import Bus, DT_CTRL, make_tester_present_msg
+from opendbc.car.common.filter_simple import FirstOrderFilter
 from opendbc.car.lateral import apply_driver_steer_torque_limits, common_fault_avoidance, apply_steer_angle_limits_vm
 from opendbc.car.interfaces import CarControllerBase
 from opendbc.car.subaru import subarucan
@@ -11,6 +12,10 @@ from opendbc.car.vehicle_model import VehicleModel
 # involves the total steering angle change rather than rate, but these limits work well for now
 MAX_STEER_RATE = 25  # deg/s
 MAX_STEER_RATE_FRAMES = 7  # tx control frames needed before torque can be cut
+
+# combat low-speed oscillations by filtering angle commands < 20 m/s
+ANGLE_FILTER_SPEED_BP = [5., 10., 20.]  # m/s
+ANGLE_FILTER_RC = [0.20, 0.10, 0.]     # s, first-order time constant
 
 
 def get_safety_CP():
@@ -35,13 +40,14 @@ class CarController(CarControllerBase):
 
     if self.CP.flags & SubaruFlags.LKAS_ANGLE:
       self.VM = VehicleModel(get_safety_CP())
+      self.angle_filter = FirstOrderFilter(0., ANGLE_FILTER_RC[0], DT_CTRL * self.p.STEER_STEP)
 
   def lateral_angle(self, CC, CS):
     # Match Tesla's override handling: go inactive on heavy driver override so the
     # commanded angle tracks measured during the override. Subaru has no graded EPS
     # hands-on level like Tesla's EPAS3S_handsOnLevel, so threshold raw torque with
     # hysteresis. Prevents command-vs-measured divergence that panda's angle safety
-    # check blocks — those dropped frames can fault the EPS.
+    # check blocks - those dropped frames can fault the EPS.
     abs_torque = abs(CS.out.steeringTorque)
     if abs_torque > self.p.STEER_OVERRIDE_TORQUE_HIGH:
       self.driver_override = True
@@ -54,8 +60,16 @@ class CarController(CarControllerBase):
     # will result in blocked frames (and eventually EPS faults)
     lat_active = CC.latActive and CS.out.cruiseState.enabled and not self.driver_override
 
+    apply_angle = CC.actuators.steeringAngleDeg
+    if lat_active:
+      self.angle_filter.update_alpha(float(np.interp(CS.out.vEgoRaw, ANGLE_FILTER_SPEED_BP, ANGLE_FILTER_RC)))
+      apply_angle = self.angle_filter.update(apply_angle)
+    else:
+      # hold the filter at the measured angle so control resumes without a step
+      self.angle_filter.x = CS.out.steeringAngleDeg
+
     apply_steer = apply_steer_angle_limits_vm(
-            CC.actuators.steeringAngleDeg,
+            apply_angle,
             self.apply_steer_last,
             CS.out.vEgoRaw,
             CS.out.steeringAngleDeg,

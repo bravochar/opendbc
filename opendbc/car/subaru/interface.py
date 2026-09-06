@@ -39,15 +39,16 @@ class CarInterface(CarInterfaceBase):
     ret.steerLimitTimer = 0.4
     ret.steerActuatorDelay = 0.1
 
-    if not (ret.flags & SubaruFlags.LKAS_ANGLE):
+    if ret.flags & SubaruFlags.LKAS_ANGLE:
+      ret.steerControlType = structs.CarParams.SteerControlType.angle
+    else:
       CarInterfaceBase.configure_torque_tune(candidate, ret.lateralTuning)
 
-    if ret.flags & SubaruFlags.LKAS_ANGLE:
+    if candidate == CAR.SUBARU_ASCENT_2023:
+      # upstream keeps LKAS_ANGLE cars dashcamOnly pending validation; override for dev builds
+      # so our validated 2023 Ascent gets full control (was dropped in 1127c77c during a merge)
       ret.dashcamOnly = is_release
-      ret.steerControlType = structs.CarParams.SteerControlType.angle
-
-      if candidate == CAR.SUBARU_ASCENT_2023:
-        ret.steerActuatorDelay = 0.1
+      ret.steerActuatorDelay = 0.1
 
     elif candidate == CAR.SUBARU_ASCENT:
       ret.steerActuatorDelay = 0.3  # end-to-end angle controller
@@ -90,6 +91,10 @@ class CarInterface(CarInterfaceBase):
 
     elif candidate == CAR.SUBARU_OUTBACK_PREGLOBAL:
       pass
+
+    elif ret.flags & SubaruFlags.LKAS_ANGLE:
+      pass  # SUBARU_OUTBACK_2023, SUBARU_FORESTER_2022: no per-model tuning, stay dashcamOnly (unvalidated upstream)
+
     else:
       raise ValueError(f"unknown car: {candidate}")
 
