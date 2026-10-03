@@ -51,7 +51,7 @@ class CarController(CarControllerBase):
   def lateral_angle(self, CC, CS):
     # check for driver override
     abs_torque = abs(CS.out.steeringTorque)
-    if abs_torque > self.p.STEER_OVERRIDE_TORQUE_HIGH:
+    if abs_torque > self.p.STEER_OVERRIDE_TORQUE_HIGH or CS.out.brakePressed:
       self.driver_override = True
       self.override_settle_frames = 0
 

@@ -20,9 +20,9 @@ def _cc(angle, lat_active=True):
   return SimpleNamespace(latActive=lat_active, actuators=SimpleNamespace(steeringAngleDeg=angle))
 
 
-def _cs(v_ego, angle=0.0, cruise_enabled=True, rate=0.0):
+def _cs(v_ego, angle=0.0, cruise_enabled=True, rate=0.0, brake_pressed=False):
   return SimpleNamespace(out=SimpleNamespace(vEgoRaw=v_ego, steeringAngleDeg=angle, steeringRateDeg=rate, steeringTorque=0.0,
-                                             cruiseState=SimpleNamespace(enabled=cruise_enabled)))
+                                             brakePressed=brake_pressed, cruiseState=SimpleNamespace(enabled=cruise_enabled)))
 
 
 class TestSubaruAngleFilter(unittest.TestCase):
@@ -46,3 +46,9 @@ class TestSubaruAngleFilter(unittest.TestCase):
     self.CC.angle_filter.x = 5.0
     self.CC.lateral_angle(_cc(10.0, lat_active=False), _cs(1.0, angle=3.3))
     self.assertEqual(self.CC.angle_filter.x, 3.3)
+
+  def test_brake_overrides_before_cruise_drops(self):
+    # cruiseState.enabled lags the brake signal on disengage; don't wait for it
+    self.CC.lateral_angle(_cc(10.0), _cs(5.0, angle=3.3, cruise_enabled=True, brake_pressed=True))
+    self.assertTrue(self.CC.driver_override)
+    self.assertEqual(self.CC.apply_steer_last, 3.3)
