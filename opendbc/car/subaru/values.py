@@ -28,7 +28,6 @@ class CarControllerParams:
     # detecting driver override
     # TODO: may need different values for Gen1 angle cars
     self.STEER_OVERRIDE_TORQUE_HIGH = 200  # enter override; above incidental (~130), below deliberate (~250+)
-    self.STEER_OVERRIDE_TORQUE_LOW = 150   # exit override (hysteresis to prevent request-bit chatter)
 
     if CP.flags & SubaruFlags.GLOBAL_GEN2:
       # TODO: lower rate limits, this reaches min/max in 0.5s which negatively affects tuning

@@ -56,7 +56,7 @@ class CarController(CarControllerBase):
       self.override_settle_frames = 0
 
     elif self.driver_override:
-      settled = abs_torque < self.p.STEER_OVERRIDE_TORQUE_LOW and \
+      settled = not CS.out.steeringPressed and \
                 abs(CS.out.steeringRateDeg) < OVERRIDE_SETTLE_RATE and \
                 abs(CC.actuators.steeringAngleDeg - CS.out.steeringAngleDeg) < OVERRIDE_SETTLE_ANGLE
       if settled:

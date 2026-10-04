@@ -1,7 +1,7 @@
 import unittest
 from types import SimpleNamespace
 
-from opendbc.car.subaru.carcontroller import CarController, ANGLE_FILTER_SPEED_BP
+from opendbc.car.subaru.carcontroller import CarController, ANGLE_FILTER_SPEED_BP, OVERRIDE_SETTLE_FRAMES
 from opendbc.car.subaru.interface import CarInterface
 from opendbc.car.subaru.fingerprints import FW_VERSIONS
 from opendbc.car.subaru.values import DBC
@@ -20,9 +20,10 @@ def _cc(angle, lat_active=True):
   return SimpleNamespace(latActive=lat_active, actuators=SimpleNamespace(steeringAngleDeg=angle))
 
 
-def _cs(v_ego, angle=0.0, cruise_enabled=True, rate=0.0, brake_pressed=False):
+def _cs(v_ego, angle=0.0, cruise_enabled=True, rate=0.0, brake_pressed=False, steering_pressed=False):
   return SimpleNamespace(out=SimpleNamespace(vEgoRaw=v_ego, steeringAngleDeg=angle, steeringRateDeg=rate, steeringTorque=0.0,
-                                             brakePressed=brake_pressed, cruiseState=SimpleNamespace(enabled=cruise_enabled)))
+                                             steeringPressed=steering_pressed, brakePressed=brake_pressed,
+                                             cruiseState=SimpleNamespace(enabled=cruise_enabled)))
 
 
 class TestSubaruAngleFilter(unittest.TestCase):
@@ -52,3 +53,21 @@ class TestSubaruAngleFilter(unittest.TestCase):
     self.CC.lateral_angle(_cc(10.0), _cs(5.0, angle=3.3, cruise_enabled=True, brake_pressed=True))
     self.assertTrue(self.CC.driver_override)
     self.assertEqual(self.CC.apply_steer_last, 3.3)
+
+  def test_override_requires_settle_to_resume(self):
+    self.CC.driver_override = True
+    for _ in range(OVERRIDE_SETTLE_FRAMES - 1):
+      self.CC.lateral_angle(_cc(0.0), _cs(5.0))
+    self.assertTrue(self.CC.driver_override)
+    self.CC.lateral_angle(_cc(0.0), _cs(5.0))
+    self.assertFalse(self.CC.driver_override)
+
+  def test_override_settle_resets_on_hands_on(self):
+    self.CC.driver_override = True
+    for _ in range(OVERRIDE_SETTLE_FRAMES - 1):
+      self.CC.lateral_angle(_cc(0.0), _cs(5.0))
+    self.CC.lateral_angle(_cc(0.0), _cs(5.0, steering_pressed=True))
+    self.assertTrue(self.CC.driver_override)
+    for _ in range(OVERRIDE_SETTLE_FRAMES - 1):
+      self.CC.lateral_angle(_cc(0.0), _cs(5.0))
+    self.assertTrue(self.CC.driver_override)
